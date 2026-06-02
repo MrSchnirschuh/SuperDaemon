@@ -1,6 +1,7 @@
 package config
 
 import (
+	"bytes"
 	"context"
 	"crypto/tls"
 	"fmt"
@@ -176,11 +177,11 @@ type SystemConfiguration struct {
 	Passwd struct {
 		// Enable controls whether generated passwd files should be mounted into containers.
 		//
-		// By default this option is disabled and Wings will not mount any additional passwd
-		// files into containers.
+		// By default this option is disabled and Wings will not mount any
+		// additional passwd files into containers.
 		Enable bool `yaml:"enabled" default:"false"`
 
-		// Directory is the directory on disk where the generated files will be stored.
+		// Directory is the directory on disk where the generated passwd files will be stored.
 		// This directory may be temporary as it will be re-created whenever Wings is started.
 		//
 		// This path **WILL** be both written to by Wings and mounted into containers created by
@@ -190,6 +191,26 @@ type SystemConfiguration struct {
 		// correct SELinux context in order for containers to use it.
 		Directory string `yaml:"directory" default:"/run/wings/etc"`
 	} `yaml:"passwd"`
+
+	// MachineID controls the mounting of a generated `/etc/machine-id` file into containers started by Wings.
+	MachineID struct {
+		// Enable controls whether a generated machine-id file should be mounted
+		// into containers.
+		//
+		// By default this option is enabled and Wings will mount an additional
+		// machine-id file into containers.
+		Enable bool `yaml:"enabled" default:"true"`
+
+		// Directory is the directory on disk where the generated machine-id files will be stored.
+		// This directory may be temporary as it will be re-created whenever Wings is started.
+		//
+		// This path **WILL** be both written to by Wings and mounted into containers created by
+		// Wings. If you are running Wings itself in a container, this path will need to be mounted
+		// into the Wings container as the exact path on the host, which should match the value
+		// specified here. If you are using SELinux, you will need to make sure this file has the
+		// correct SELinux context in order for containers to use it.
+		Directory string `yaml:"directory" default:"/run/wings/machine-id"`
+	} `yaml:"machine_id"`
 
 	// The amount of time in seconds that can elapse before a server's disk space calculation is
 	// considered stale and a re-check should occur. DANGER: setting this value too low can seriously
@@ -294,7 +315,14 @@ type ConsoleThrottles struct {
 	Period uint64 `json:"line_reset_interval" yaml:"line_reset_interval" default:"100"`
 }
 
+type Token struct {
+	ID    string
+	Token string
+}
+
 type Configuration struct {
+	Token Token `json:"-" yaml:"-"`
+
 	// The location from which this configuration instance was instantiated.
 	path string
 
@@ -351,6 +379,12 @@ type Configuration struct {
 // This function does not modify the currently stored global configuration.
 func NewAtPath(path string) (*Configuration, error) {
 	var c Configuration
+	// Configures the default values for many of the configuration options present
+	// in the structs. Values set in the configuration file take priority over the
+	// default values.
+	if err := defaults.Set(&c); err != nil {
+		return nil, err
+	}
 	// Track the location where we created this configuration.
 	c.path = path
 	return &c, nil
@@ -361,11 +395,16 @@ func NewAtPath(path string) (*Configuration, error) {
 // will be paused until it is complete.
 func Set(c *Configuration) {
 	mu.Lock()
-	if _config == nil || _config.AuthenticationToken != c.AuthenticationToken {
-		_jwtAlgo = jwt.NewHS256([]byte(c.AuthenticationToken))
+	defer mu.Unlock()
+	token := c.Token.Token
+	if token == "" {
+		c.Token.Token = c.AuthenticationToken
+		token = c.Token.Token
+	}
+	if _config == nil || _config.Token.Token != token {
+		_jwtAlgo = jwt.NewHS256([]byte(token))
 	}
 	_config = c
-	mu.Unlock()
 }
 
 // SetDebugViaFlag tracks if the application is running in debug mode because of
@@ -373,9 +412,9 @@ func Set(c *Configuration) {
 // change to the disk.
 func SetDebugViaFlag(d bool) {
 	mu.Lock()
+	defer mu.Unlock()
 	_config.Debug = d
 	_debugViaFlag = d
-	mu.Unlock()
 }
 
 // Get returns the global configuration instance. This is a thread-safe operation
@@ -400,8 +439,8 @@ func Get() *Configuration {
 // the global configuration.
 func Update(callback func(c *Configuration)) {
 	mu.Lock()
+	defer mu.Unlock()
 	callback(_config)
-	mu.Unlock()
 }
 
 // GetJwtAlgorithm returns the in-memory JWT algorithm.
@@ -557,10 +596,23 @@ func FromFile(path string) error {
 		return err
 	}
 
-	// Configures the default values for many of the configuration options present
-	// in the structs. Values set in the configuration file will not be overridden by the
-	// default values.
-	if err := defaults.Set(c); err != nil {
+	c.Token = Token{
+		ID:    os.Getenv("WINGS_TOKEN_ID"),
+		Token: os.Getenv("WINGS_TOKEN"),
+	}
+	if c.Token.ID == "" {
+		c.Token.ID = c.AuthenticationTokenId
+	}
+	if c.Token.Token == "" {
+		c.Token.Token = c.AuthenticationToken
+	}
+
+	c.Token.ID, err = Expand(c.Token.ID)
+	if err != nil {
+		return err
+	}
+	c.Token.Token, err = Expand(c.Token.Token)
+	if err != nil {
 		return err
 	}
 
@@ -602,6 +654,11 @@ func ConfigureDirectories() error {
 		return err
 	}
 
+	log.WithField("path", _config.System.TmpDirectory).Debug("ensuring temporary data directory exists")
+	if err := os.MkdirAll(_config.System.TmpDirectory, 0o700); err != nil {
+		return err
+	}
+
 	log.WithField("path", _config.System.ArchiveDirectory).Debug("ensuring archive data directory exists")
 	if err := os.MkdirAll(_config.System.ArchiveDirectory, 0o700); err != nil {
 		return err
@@ -615,6 +672,13 @@ func ConfigureDirectories() error {
 	if _config.System.Passwd.Enable {
 		log.WithField("path", _config.System.Passwd.Directory).Debug("ensuring passwd directory exists")
 		if err := os.MkdirAll(_config.System.Passwd.Directory, 0o755); err != nil {
+			return err
+		}
+	}
+
+	if _config.System.MachineID.Enable {
+		log.WithField("path", _config.System.MachineID.Directory).Debug("ensuring machine-id directory exists")
+		if err := os.MkdirAll(_config.System.MachineID.Directory, 0o755); err != nil {
 			return err
 		}
 	}
@@ -765,4 +829,37 @@ func UseOpenat2() bool {
 		openat2.Store(true)
 		return true
 	}
+}
+
+// Expand expands an input string by calling [os.ExpandEnv] to expand all
+// environment variables, then checks if the value is prefixed with `file://`
+// to support reading the value from a file.
+//
+// NOTE: the order of expanding environment variables first then checking if
+// the value references a file is important. This behaviour allows a user to
+// pass a value like `file://${CREDENTIALS_DIRECTORY}/token` to allow us to
+// work with credentials loaded by systemd's `LoadCredential` (or `LoadCredentialEncrypted`)
+// options without the user needing to assume the path of `CREDENTIALS_DIRECTORY`
+// or use a preStart script to read the files for us.
+func Expand(v string) (string, error) {
+	// Expand environment variables within the string.
+	//
+	// NOTE: this may cause issues if the string contains `$` and doesn't intend
+	// on getting expanded, however we are using this for our tokens which are
+	// all alphanumeric characters only.
+	v = os.ExpandEnv(v)
+
+	// Handle files.
+	const filePrefix = "file://"
+	if strings.HasPrefix(v, filePrefix) {
+		p := v[len(filePrefix):]
+
+		b, err := os.ReadFile(p)
+		if err != nil {
+			return "", nil
+		}
+		v = string(bytes.TrimRight(bytes.TrimRight(b, "\r"), "\n"))
+	}
+
+	return v, nil
 }
