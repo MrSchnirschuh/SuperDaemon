@@ -38,6 +38,8 @@
 # The built executable
 wings
 wings.exe
+superdaemon
+dist/
 
 # IDE/Editor files (VS Code)
 /.vscode
