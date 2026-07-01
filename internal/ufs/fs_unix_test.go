@@ -13,8 +13,10 @@ import (
 	"slices"
 	"strconv"
 	"testing"
+	"time"
 
 	"github.com/pterodactyl/wings/internal/ufs"
+	"golang.org/x/sys/unix"
 )
 
 type testUnixFS struct {
@@ -252,7 +254,57 @@ func TestUnixFS_Chmod(t *testing.T) {
 	}
 	defer fs.Cleanup()
 
-	// TODO: implement
+	t.Run("change mode on file", func(t *testing.T) {
+		f, err := fs.Create("chmod_test_file")
+		if err != nil {
+			t.Fatal(err)
+		}
+		_ = f.Close()
+
+		// Change mode to 0o644
+		if err := fs.Chmod("chmod_test_file", 0o644); err != nil {
+			t.Fatal(err)
+		}
+
+		info, err := fs.Lstat("chmod_test_file")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if info.Mode().Perm() != 0o644 {
+			t.Errorf("expected mode 0o644, got %o", info.Mode().Perm())
+		}
+
+		// Change mode to 0o755
+		if err := fs.Chmod("chmod_test_file", 0o755); err != nil {
+			t.Fatal(err)
+		}
+
+		info, err = fs.Lstat("chmod_test_file")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if info.Mode().Perm() != 0o755 {
+			t.Errorf("expected mode 0o755, got %o", info.Mode().Perm())
+		}
+	})
+
+	t.Run("change mode on directory", func(t *testing.T) {
+		if err := fs.Mkdir("chmod_test_dir", 0o755); err != nil {
+			t.Fatal(err)
+		}
+
+		if err := fs.Chmod("chmod_test_dir", 0o700); err != nil {
+			t.Fatal(err)
+		}
+
+		info, err := fs.Lstat("chmod_test_dir")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if info.Mode().Perm() != 0o700 {
+			t.Errorf("expected mode 0o700, got %o", info.Mode().Perm())
+		}
+	})
 }
 
 func TestUnixFS_Chown(t *testing.T) {
@@ -264,7 +316,60 @@ func TestUnixFS_Chown(t *testing.T) {
 	}
 	defer fs.Cleanup()
 
-	// TODO: implement
+	t.Run("chown file to current uid/gid", func(t *testing.T) {
+		f, err := fs.Create("chown_test_file")
+		if err != nil {
+			t.Fatal(err)
+		}
+		_ = f.Close()
+
+		// Chown to the current process's uid/gid
+		if err := fs.Chown("chown_test_file", os.Getuid(), os.Getgid()); err != nil {
+			t.Fatal(err)
+		}
+
+		info, err := fs.Lstat("chown_test_file")
+		if err != nil {
+			t.Fatal(err)
+		}
+		sys := info.Sys()
+		stat, ok := sys.(*unix.Stat_t)
+		if !ok {
+			t.Fatal("Sys() did not return *unix.Stat_t")
+		}
+		if stat.Uid != uint32(os.Getuid()) {
+			t.Errorf("expected uid %d, got %d", os.Getuid(), stat.Uid)
+		}
+		if stat.Gid != uint32(os.Getgid()) {
+			t.Errorf("expected gid %d, got %d", os.Getgid(), stat.Gid)
+		}
+	})
+
+	t.Run("chown with -1 uid/gid (no change)", func(t *testing.T) {
+		f, err := fs.Create("chown_test_file_nochange")
+		if err != nil {
+			t.Fatal(err)
+		}
+		_ = f.Close()
+
+		// Passing -1 for both should be a no-op
+		if err := fs.Chown("chown_test_file_nochange", -1, -1); err != nil {
+			t.Fatal(err)
+		}
+
+		info, err := fs.Lstat("chown_test_file_nochange")
+		if err != nil {
+			t.Fatal(err)
+		}
+		sys := info.Sys()
+		stat, ok := sys.(*unix.Stat_t)
+		if !ok {
+			t.Fatal("Sys() did not return *unix.Stat_t")
+		}
+		if stat.Uid != uint32(os.Getuid()) {
+			t.Errorf("expected uid %d, got %d", os.Getuid(), stat.Uid)
+		}
+	})
 }
 
 func TestUnixFS_Lchown(t *testing.T) {
@@ -276,7 +381,41 @@ func TestUnixFS_Lchown(t *testing.T) {
 	}
 	defer fs.Cleanup()
 
-	// TODO: implement
+	t.Run("lchown symlink itself", func(t *testing.T) {
+		// Create a target file
+		f, err := fs.Create("lchown_target")
+		if err != nil {
+			t.Fatal(err)
+		}
+		_ = f.Close()
+
+		// Create a symlink pointing to the target
+		if err := fs.Symlink("lchown_target", "lchown_link"); err != nil {
+			t.Fatal(err)
+		}
+
+		// Lchown the symlink itself
+		if err := fs.Lchown("lchown_link", os.Getuid(), os.Getgid()); err != nil {
+			t.Fatal(err)
+		}
+
+		// Lstat should show the symlink's ownership
+		info, err := fs.Lstat("lchown_link")
+		if err != nil {
+			t.Fatal(err)
+		}
+		sys := info.Sys()
+		stat, ok := sys.(*unix.Stat_t)
+		if !ok {
+			t.Fatal("Sys() did not return *unix.Stat_t")
+		}
+		if stat.Uid != uint32(os.Getuid()) {
+			t.Errorf("expected uid %d, got %d", os.Getuid(), stat.Uid)
+		}
+		if stat.Gid != uint32(os.Getgid()) {
+			t.Errorf("expected gid %d, got %d", os.Getgid(), stat.Gid)
+		}
+	})
 }
 
 func TestUnixFS_Chtimes(t *testing.T) {
@@ -288,7 +427,30 @@ func TestUnixFS_Chtimes(t *testing.T) {
 	}
 	defer fs.Cleanup()
 
-	// TODO: implement
+	t.Run("set access and modification times", func(t *testing.T) {
+		f, err := fs.Create("chtimes_test_file")
+		if err != nil {
+			t.Fatal(err)
+		}
+		_ = f.Close()
+
+		atime := time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC)
+		mtime := time.Date(2021, 6, 15, 12, 30, 0, 0, time.UTC)
+
+		if err := fs.Chtimes("chtimes_test_file", atime, mtime); err != nil {
+			t.Fatal(err)
+		}
+
+		info, err := fs.Stat("chtimes_test_file")
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		// The underlying filesystem may truncate or round, so check approximate
+		if info.ModTime().Before(mtime.Add(-time.Second)) || info.ModTime().After(mtime.Add(time.Second)) {
+			t.Errorf("expected mtime around %v, got %v", mtime, info.ModTime())
+		}
+	})
 }
 
 func TestUnixFS_Create(t *testing.T) {
@@ -300,7 +462,74 @@ func TestUnixFS_Create(t *testing.T) {
 	}
 	defer fs.Cleanup()
 
-	// TODO: implement
+	t.Run("create file and write content", func(t *testing.T) {
+		content := []byte("hello, world!")
+		f, err := fs.Create("create_test_file")
+		if err != nil {
+			t.Fatal(err)
+		}
+		n, err := f.Write(content)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if n != len(content) {
+			t.Errorf("expected to write %d bytes, wrote %d", len(content), n)
+		}
+		if err := f.Close(); err != nil {
+			t.Fatal(err)
+		}
+
+		// Read it back
+		f, err = fs.Open("create_test_file")
+		if err != nil {
+			t.Fatal(err)
+		}
+		buf := make([]byte, len(content))
+		n, err = f.Read(buf)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if n != len(content) {
+			t.Errorf("expected to read %d bytes, read %d", len(content), n)
+		}
+		if string(buf) != string(content) {
+			t.Errorf("expected content %q, got %q", string(content), string(buf))
+		}
+		_ = f.Close()
+	})
+
+	t.Run("create truncates existing file", func(t *testing.T) {
+		// Create a file with content
+		f, err := fs.Create("create_truncate_test")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if _, err := f.Write([]byte("original content")); err != nil {
+			t.Fatal(err)
+		}
+		_ = f.Close()
+
+		// Create again (should truncate)
+		f, err = fs.Create("create_truncate_test")
+		if err != nil {
+			t.Fatal(err)
+		}
+		_ = f.Close()
+
+		// Read back - should be empty
+		f, err = fs.Open("create_truncate_test")
+		if err != nil {
+			t.Fatal(err)
+		}
+		info, err := f.Stat()
+		if err != nil {
+			t.Fatal(err)
+		}
+		if info.Size() != 0 {
+			t.Errorf("expected size 0 after truncation, got %d", info.Size())
+		}
+		_ = f.Close()
+	})
 }
 
 func TestUnixFS_Mkdir(t *testing.T) {
@@ -312,7 +541,44 @@ func TestUnixFS_Mkdir(t *testing.T) {
 	}
 	defer fs.Cleanup()
 
-	// TODO: implement
+	t.Run("create directory", func(t *testing.T) {
+		if err := fs.Mkdir("mkdir_test_dir", 0o755); err != nil {
+			t.Fatal(err)
+		}
+
+		info, err := fs.Lstat("mkdir_test_dir")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !info.IsDir() {
+			t.Error("expected directory, got non-directory")
+		}
+		if info.Mode().Perm() != 0o755 {
+			t.Errorf("expected mode 0o755, got %o", info.Mode().Perm())
+		}
+	})
+
+	t.Run("error on existing directory", func(t *testing.T) {
+		if err := fs.Mkdir("mkdir_existing", 0o755); err != nil {
+			t.Fatal(err)
+		}
+
+		if err := fs.Mkdir("mkdir_existing", 0o755); !errors.Is(err, ufs.ErrExist) {
+			t.Errorf("expected ErrExist, got: %v", err)
+		}
+	})
+
+	t.Run("error on existing file", func(t *testing.T) {
+		f, err := fs.Create("mkdir_existing_file")
+		if err != nil {
+			t.Fatal(err)
+		}
+		_ = f.Close()
+
+		if err := fs.Mkdir("mkdir_existing_file", 0o755); !errors.Is(err, ufs.ErrExist) {
+			t.Errorf("expected ErrExist, got: %v", err)
+		}
+	})
 }
 
 func TestUnixFS_MkdirAll(t *testing.T) {
@@ -329,7 +595,29 @@ func TestUnixFS_MkdirAll(t *testing.T) {
 		return
 	}
 
-	// TODO: stat sanity check
+	// Stat sanity check: verify the deepest directory exists
+	info, err := fs.Lstat("a/bunch/of/directories")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !info.IsDir() {
+		t.Error("expected the deepest path to be a directory")
+	}
+	if info.Mode().Perm() != 0o755 {
+		t.Errorf("expected mode 0o755, got %o", info.Mode().Perm())
+	}
+
+	// Also verify intermediate directories exist
+	for _, dir := range []string{"a", "a/bunch", "a/bunch/of"} {
+		info, err := fs.Lstat(dir)
+		if err != nil {
+			t.Errorf("intermediate directory %q not found: %v", dir, err)
+			continue
+		}
+		if !info.IsDir() {
+			t.Errorf("expected %q to be a directory", dir)
+		}
+	}
 }
 
 func TestUnixFS_Open(t *testing.T) {
@@ -341,7 +629,42 @@ func TestUnixFS_Open(t *testing.T) {
 	}
 	defer fs.Cleanup()
 
-	// TODO: implement
+	t.Run("open existing file and read", func(t *testing.T) {
+		content := []byte("open test content")
+		f, err := fs.Create("open_test_file")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if _, err := f.Write(content); err != nil {
+			t.Fatal(err)
+		}
+		_ = f.Close()
+
+		f, err = fs.Open("open_test_file")
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer f.Close()
+
+		buf := make([]byte, len(content))
+		n, err := f.Read(buf)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if n != len(content) {
+			t.Errorf("expected to read %d bytes, read %d", len(content), n)
+		}
+		if string(buf) != string(content) {
+			t.Errorf("expected content %q, got %q", string(content), string(buf))
+		}
+	})
+
+	t.Run("open non-existent file returns error", func(t *testing.T) {
+		_, err := fs.Open("nonexistent_file")
+		if !errors.Is(err, ufs.ErrNotExist) {
+			t.Errorf("expected ErrNotExist, got: %v", err)
+		}
+	})
 }
 
 func TestUnixFS_OpenFile(t *testing.T) {
@@ -353,7 +676,56 @@ func TestUnixFS_OpenFile(t *testing.T) {
 	}
 	defer fs.Cleanup()
 
-	// TODO: implement
+	t.Run("create with O_CREATE|O_RDWR", func(t *testing.T) {
+		content := []byte("openfile test content")
+		f, err := fs.OpenFile("openfile_test", ufs.O_CREATE|ufs.O_RDWR, 0o644)
+		if err != nil {
+			t.Fatal(err)
+		}
+		n, err := f.Write(content)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if n != len(content) {
+			t.Errorf("expected to write %d bytes, wrote %d", len(content), n)
+		}
+		_ = f.Close()
+
+		// Read back
+		f, err = fs.Open("openfile_test")
+		if err != nil {
+			t.Fatal(err)
+		}
+		buf := make([]byte, len(content))
+		n, err = f.Read(buf)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if string(buf) != string(content) {
+			t.Errorf("expected content %q, got %q", string(content), string(buf))
+		}
+		_ = f.Close()
+	})
+
+	t.Run("open with O_RDONLY on non-existent file returns error", func(t *testing.T) {
+		_, err := fs.OpenFile("nonexistent_openfile", ufs.O_RDONLY, 0)
+		if !errors.Is(err, ufs.ErrNotExist) {
+			t.Errorf("expected ErrNotExist, got: %v", err)
+		}
+	})
+
+	t.Run("open with O_CREATE|O_EXCL on existing file returns error", func(t *testing.T) {
+		f, err := fs.Create("openfile_excl_test")
+		if err != nil {
+			t.Fatal(err)
+		}
+		_ = f.Close()
+
+		_, err = fs.OpenFile("openfile_excl_test", ufs.O_CREATE|ufs.O_EXCL|ufs.O_RDWR, 0o644)
+		if !errors.Is(err, ufs.ErrExist) {
+			t.Errorf("expected ErrExist, got: %v", err)
+		}
+	})
 }
 
 func TestUnixFS_ReadDir(t *testing.T) {
@@ -365,7 +737,68 @@ func TestUnixFS_ReadDir(t *testing.T) {
 	}
 	defer fs.Cleanup()
 
-	// TODO: implement
+	t.Run("read directory entries", func(t *testing.T) {
+		// Create some files and directories
+		f, err := fs.Create("readdir_file1")
+		if err != nil {
+			t.Fatal(err)
+		}
+		_ = f.Close()
+
+		f, err = fs.Create("readdir_file2")
+		if err != nil {
+			t.Fatal(err)
+		}
+		_ = f.Close()
+
+		if err := fs.Mkdir("readdir_subdir", 0o755); err != nil {
+			t.Fatal(err)
+		}
+
+		entries, err := fs.ReadDir(".")
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		// Build a set of entry names
+		entryNames := make(map[string]bool)
+		for _, e := range entries {
+			entryNames[e.Name()] = true
+		}
+
+		for _, name := range []string{"readdir_file1", "readdir_file2", "readdir_subdir"} {
+			if !entryNames[name] {
+				t.Errorf("expected entry %q not found in directory listing", name)
+			}
+		}
+	})
+
+	t.Run("read directory with nested entries", func(t *testing.T) {
+		if err := fs.MkdirAll("nested/a/b", 0o755); err != nil {
+			t.Fatal(err)
+		}
+		f, err := fs.Create("nested/a/file_in_a")
+		if err != nil {
+			t.Fatal(err)
+		}
+		_ = f.Close()
+
+		entries, err := fs.ReadDir("nested/a")
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		found := false
+		for _, e := range entries {
+			if e.Name() == "file_in_a" {
+				found = true
+				break
+			}
+		}
+		if !found {
+			t.Error("expected 'file_in_a' in nested/a directory listing")
+		}
+	})
 }
 
 func TestUnixFS_Remove(t *testing.T) {
@@ -504,7 +937,60 @@ func TestUnixFS_Stat(t *testing.T) {
 	}
 	defer fs.Cleanup()
 
-	// TODO: implement
+	t.Run("stat a regular file", func(t *testing.T) {
+		content := []byte("stat test content")
+		f, err := fs.Create("stat_test_file")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if _, err := f.Write(content); err != nil {
+			t.Fatal(err)
+		}
+		_ = f.Close()
+
+		info, err := fs.Stat("stat_test_file")
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if info.Name() != "stat_test_file" {
+			t.Errorf("expected name %q, got %q", "stat_test_file", info.Name())
+		}
+		if info.Size() != int64(len(content)) {
+			t.Errorf("expected size %d, got %d", len(content), info.Size())
+		}
+		if info.IsDir() {
+			t.Error("expected IsDir() to be false for a regular file")
+		}
+		if !info.Mode().IsRegular() {
+			t.Error("expected regular file mode")
+		}
+	})
+
+	t.Run("stat a directory", func(t *testing.T) {
+		if err := fs.Mkdir("stat_test_dir", 0o755); err != nil {
+			t.Fatal(err)
+		}
+
+		info, err := fs.Stat("stat_test_dir")
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if !info.IsDir() {
+			t.Error("expected IsDir() to be true for a directory")
+		}
+		if info.Name() != "stat_test_dir" {
+			t.Errorf("expected name %q, got %q", "stat_test_dir", info.Name())
+		}
+	})
+
+	t.Run("stat non-existent file returns error", func(t *testing.T) {
+		_, err := fs.Stat("nonexistent_stat_file")
+		if !errors.Is(err, ufs.ErrNotExist) {
+			t.Errorf("expected ErrNotExist, got: %v", err)
+		}
+	})
 }
 
 func TestUnixFS_Lstat(t *testing.T) {
@@ -516,7 +1002,66 @@ func TestUnixFS_Lstat(t *testing.T) {
 	}
 	defer fs.Cleanup()
 
-	// TODO: implement
+	t.Run("lstat follows symlink vs stat difference", func(t *testing.T) {
+		// Create a target file
+		content := []byte("lstat target content")
+		f, err := fs.Create("lstat_target")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if _, err := f.Write(content); err != nil {
+			t.Fatal(err)
+		}
+		_ = f.Close()
+
+		// Create a symlink to the target
+		if err := fs.Symlink("lstat_target", "lstat_link"); err != nil {
+			t.Fatal(err)
+		}
+
+		// Lstat should report the symlink itself (not the target)
+		lstatInfo, err := fs.Lstat("lstat_link")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if lstatInfo.Mode().IsRegular() {
+			t.Error("Lstat on symlink should not show regular file mode")
+		}
+		if lstatInfo.Mode()&ufs.ModeSymlink == 0 {
+			t.Error("expected ModeSymlink bit to be set in Lstat result")
+		}
+
+		// Stat should follow the symlink and report the target
+		statInfo, err := fs.Stat("lstat_link")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !statInfo.Mode().IsRegular() {
+			t.Error("Stat on symlink should follow and show regular file")
+		}
+		if statInfo.Size() != int64(len(content)) {
+			t.Errorf("expected size %d from stat, got %d", len(content), statInfo.Size())
+		}
+	})
+
+	t.Run("lstat a regular file", func(t *testing.T) {
+		f, err := fs.Create("lstat_regular")
+		if err != nil {
+			t.Fatal(err)
+		}
+		_ = f.Close()
+
+		info, err := fs.Lstat("lstat_regular")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !info.Mode().IsRegular() {
+			t.Error("expected regular file")
+		}
+		if info.Name() != "lstat_regular" {
+			t.Errorf("expected name %q, got %q", "lstat_regular", info.Name())
+		}
+	})
 }
 
 func TestUnixFS_Symlink(t *testing.T) {
@@ -528,7 +1073,88 @@ func TestUnixFS_Symlink(t *testing.T) {
 	}
 	defer fs.Cleanup()
 
-	// TODO: implement
+	t.Run("create symlink and verify with Lstat", func(t *testing.T) {
+		// Create a target file
+		content := []byte("symlink target content")
+		f, err := fs.Create("symlink_target")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if _, err := f.Write(content); err != nil {
+			t.Fatal(err)
+		}
+		_ = f.Close()
+
+		// Create a symlink
+		if err := fs.Symlink("symlink_target", "symlink_link"); err != nil {
+			t.Fatal(err)
+		}
+
+		// Lstat should show the symlink
+		info, err := fs.Lstat("symlink_link")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if info.Mode()&ufs.ModeSymlink == 0 {
+			t.Error("expected ModeSymlink bit to be set")
+		}
+	})
+
+	t.Run("read through symlink", func(t *testing.T) {
+		content := []byte("read through symlink")
+		f, err := fs.Create("symlink_read_target")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if _, err := f.Write(content); err != nil {
+			t.Fatal(err)
+		}
+		_ = f.Close()
+
+		if err := fs.Symlink("symlink_read_target", "symlink_read_link"); err != nil {
+			t.Fatal(err)
+		}
+
+		// Open through the symlink
+		f, err = fs.Open("symlink_read_link")
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer f.Close()
+
+		buf := make([]byte, len(content))
+		n, err := f.Read(buf)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if n != len(content) {
+			t.Errorf("expected to read %d bytes, read %d", len(content), n)
+		}
+		if string(buf) != string(content) {
+			t.Errorf("expected content %q, got %q", string(content), string(buf))
+		}
+	})
+
+	t.Run("symlink to non-existent target", func(t *testing.T) {
+		// Creating a symlink to a non-existent target should succeed
+		if err := fs.Symlink("nonexistent_target", "symlink_dangling"); err != nil {
+			t.Fatal(err)
+		}
+
+		info, err := fs.Lstat("symlink_dangling")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if info.Mode()&ufs.ModeSymlink == 0 {
+			t.Error("expected ModeSymlink bit to be set for dangling symlink")
+		}
+
+		// Opening through a dangling symlink should fail
+		_, err = fs.Open("symlink_dangling")
+		if !errors.Is(err, ufs.ErrNotExist) {
+			t.Errorf("expected ErrNotExist when opening dangling symlink, got: %v", err)
+		}
+	})
 }
 
 func TestUnixFS_Touch(t *testing.T) {
