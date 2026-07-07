@@ -12,7 +12,6 @@ import (
 	"github.com/apex/log"
 	"github.com/beevik/etree"
 	"github.com/buger/jsonparser"
-	"github.com/icza/dyno"
 	"github.com/magiconair/properties"
 	"gopkg.in/ini.v1"
 	"gopkg.in/yaml.v3"
@@ -433,10 +432,7 @@ func (f *ConfigurationFile) parseYamlFile(file ufs.File) error {
 		return err
 	}
 
-	// Unmarshal the yaml data into a JSON interface such that we can work with
-	// any arbitrary data structure. If we don't do this, I can't use gabs which
-	// makes working with unknown JSON significantly easier.
-	jsonBytes, err := json.Marshal(dyno.ConvertMapI2MapS(i))
+	jsonBytes, err := json.Marshal(i)
 	if err != nil {
 		return err
 	}
