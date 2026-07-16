@@ -35,6 +35,8 @@
 # The built executable
 wings
 wings.exe
+superdaemon
+superdaemon.exe
 
 # IDE/Editor files (VS Code)
 /.vscode
