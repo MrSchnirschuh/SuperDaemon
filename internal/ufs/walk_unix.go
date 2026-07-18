@@ -12,7 +12,6 @@ import (
 	iofs "io/fs"
 	"os"
 	"path"
-	"reflect"
 	"unsafe"
 
 	"golang.org/x/sys/unix"
@@ -89,8 +88,9 @@ func (fs *UnixFS) walkDir(b []byte, parentfd int, name, relative string, d DirEn
 	return nil
 }
 
-// ReadDirMap .
-// TODO: document
+// ReadDirMap reads all entries in a directory and maps them through fn.
+// Returns a slice of T values, one per directory entry (excluding . and ..).
+// If fn returns an error, iteration stops and the error is returned immediately.
 func ReadDirMap[T any](fs *UnixFS, path string, fn func(DirEntry) (T, error)) ([]T, error) {
 	dirfd, name, closeFd, err := fs.safePath(path)
 	defer closeFd()
@@ -132,30 +132,21 @@ func nameFromDirent(de *unix.Dirent) (name []byte) {
 	ml := int(de.Reclen) - nameOffset
 
 	// Convert syscall.Dirent.Name, which is array of int8, to []byte, by
-	// overwriting Cap, Len, and Data slice header fields to the max possible
-	// name length computed above, and finding the terminating NULL byte.
-	//
-	// TODO: is there an alternative to the deprecated SliceHeader?
-	// SliceHeader was mainly deprecated due to it being misused for avoiding
-	// allocations when converting a byte slice to a string, ref;
-	// https://go.dev/issue/53003
-	sh := (*reflect.SliceHeader)(unsafe.Pointer(&name))
-	sh.Cap = ml
-	sh.Len = ml
-	sh.Data = uintptr(unsafe.Pointer(&de.Name[0]))
+	// using unsafe.Slice (Go 1.17+) to create a slice over the Name array
+	// without allocation, then finding the terminating NULL byte.
+	// ponytail: unsafe.Slice replaces deprecated reflect.SliceHeader.
+	name = unsafe.Slice((*byte)(unsafe.Pointer(&de.Name[0])), ml)
 
 	if index := bytes.IndexByte(name, 0); index >= 0 {
-		// Found NULL byte; set slice's cap and len accordingly.
-		sh.Cap = index
-		sh.Len = index
+		// Found NULL byte; trim slice.
+		name = name[:index]
 		return
 	}
 
 	// NOTE: This branch is not expected, but included for defensive
 	// programming, and provides a hard stop on the name based on the structure
 	// field array size.
-	sh.Cap = len(de.Name)
-	sh.Len = sh.Cap
+	name = name[:len(de.Name)]
 	return
 }
 

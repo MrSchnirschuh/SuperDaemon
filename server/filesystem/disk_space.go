@@ -17,25 +17,24 @@ type SpaceCheckingOpts struct {
 	AllowStaleResponse bool
 }
 
-// TODO: can this be replaced with some sort of atomic? Like atomic.Pointer?
+// usageLookupTime wraps a time.Time with atomic load/store semantics.
+// ponytail: atomic.Pointer over sync.RWMutex — same correctness, no lock.
 type usageLookupTime struct {
-	sync.RWMutex
-	value time.Time
+	ptr atomic.Pointer[time.Time]
 }
 
 // Set sets the last time that a disk space lookup was performed.
 func (ult *usageLookupTime) Set(t time.Time) {
-	ult.Lock()
-	ult.value = t
-	ult.Unlock()
+	ult.ptr.Store(&t)
 }
 
 // Get the last time that we performed a disk space usage lookup.
 func (ult *usageLookupTime) Get() time.Time {
-	ult.RLock()
-	defer ult.RUnlock()
-
-	return ult.value
+	p := ult.ptr.Load()
+	if p == nil {
+		return time.Time{}
+	}
+	return *p
 }
 
 // MaxDisk returns the maximum amount of disk space that this Filesystem
