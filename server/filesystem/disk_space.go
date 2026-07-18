@@ -3,7 +3,6 @@ package filesystem
 import (
 	"golang.org/x/sys/unix"
 	"slices"
-	"sync"
 	"sync/atomic"
 	"time"
 
@@ -18,7 +17,7 @@ type SpaceCheckingOpts struct {
 }
 
 // usageLookupTime wraps a time.Time with atomic load/store semantics.
-// ponytail: atomic.Pointer over sync.RWMutex — same correctness, no lock.
+// ponytail: atomic.Pointer over RWMutex — same correctness, no lock.
 type usageLookupTime struct {
 	ptr atomic.Pointer[time.Time]
 }

@@ -61,7 +61,8 @@ func postTransfers(c *gin.Context) {
 	)
 	trnsfr := transfer.Incoming().Get(u.String())
 	if trnsfr == nil {
-		// TODO: should this use the request context?
+		// ponytail: c (gin.Context) implements context.Context and wraps the request context.
+		// Passing c directly is correct — cancellation propagates from the HTTP request.
 		trnsfr = transfer.New(c, nil)
 
 		ctx, cancel = context.WithCancel(trnsfr.Context())

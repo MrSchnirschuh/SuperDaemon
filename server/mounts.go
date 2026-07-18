@@ -1,6 +1,7 @@
 package server
 
 import (
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -66,7 +67,6 @@ func (s *Server) Mounts() []environment.Mount {
 func (s *Server) customMounts() []environment.Mount {
 	var mounts []environment.Mount
 
-	// TODO: probably need to handle things trying to mount directories that do not exist.
 	for _, m := range s.Config().Mounts {
 		source := filepath.Clean(m.Source)
 		target := filepath.Clean(m.Target)
@@ -76,6 +76,12 @@ func (s *Server) customMounts() []environment.Mount {
 			"target_path": target,
 			"read_only":   m.ReadOnly,
 		})
+
+		// ponytail: skip mount if source directory doesn't exist — log and continue.
+		if _, err := os.Stat(source); os.IsNotExist(err) {
+			logger.WithField("source_path", source).Warn("skipping custom server mount, source directory does not exist")
+			continue
+		}
 
 		mounted := false
 		for _, allowed := range config.Get().AllowedMounts {

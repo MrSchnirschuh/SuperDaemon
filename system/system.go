@@ -3,6 +3,7 @@ package system
 import (
 	"context"
 	"runtime"
+	"sync"
 
 	"github.com/acobaugh/osrelease"
 	"github.com/docker/docker/api/types"
@@ -164,20 +165,28 @@ func GetSystemUtilization() (*Utilization, error) {
 	}, nil
 }
 
+var (
+	dockerClient   *client.Client
+	dockerClientMu sync.Once
+)
+
 func GetDockerInfo(ctx context.Context) (types.Version, system.Info, error) {
-	// TODO: find a way to re-use the client from the docker environment.
-	c, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
-	if err != nil {
-		return types.Version{}, system.Info{}, err
-	}
-	defer c.Close()
-
-	dockerVersion, err := c.ServerVersion(ctx)
+	// ponytail: cache docker client locally via sync.Once to avoid creating a new
+	// connection on every call. Can't use environment.Docker() due to import cycle.
+	var err error
+	dockerClientMu.Do(func() {
+		dockerClient, err = client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
+	})
 	if err != nil {
 		return types.Version{}, system.Info{}, err
 	}
 
-	dockerInfo, err := c.Info(ctx)
+	dockerVersion, err := dockerClient.ServerVersion(ctx)
+	if err != nil {
+		return types.Version{}, system.Info{}, err
+	}
+
+	dockerInfo, err := dockerClient.Info(ctx)
 	if err != nil {
 		return types.Version{}, system.Info{}, err
 	}
