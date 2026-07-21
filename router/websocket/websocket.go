@@ -433,10 +433,7 @@ func (h *Handler) HandleInbound(ctx context.Context, m Message) error {
 				return nil
 			}
 
-			// TODO(dane): should probably add a new process state that is "booting environment" or something
-			//  so that we can better handle this and only set the environment to booted once we're attached.
-			//
-			//  Or maybe just an IsBooted function?
+			// ponytail: add IsBooted() to environment interface if boot-state logic grows
 			if h.server.Environment.State() == environment.ProcessStartingState {
 				if e, ok := h.server.Environment.(*docker.Environment); ok {
 					if !e.IsAttached() {

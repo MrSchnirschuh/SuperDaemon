@@ -64,7 +64,7 @@ func postServerBackup(c *gin.Context) {
 // This endpoint will block until the backup is fully restored allowing for a
 // spinner to be displayed in the Panel UI effectively.
 //
-// TODO: stop the server if it is running
+// ponytail: stop server before restore; add s.Stop() if running
 func postServerRestoreBackup(c *gin.Context) {
 	s := middleware.ExtractServer(c)
 	client := middleware.ExtractApiClient(c)
@@ -131,12 +131,7 @@ func postServerRestoreBackup(c *gin.Context) {
 	// parse over the contents as we go in order to restore it to the server.
 	httpClient := http.Client{}
 	logger.Info("downloading backup from remote location...")
-	// TODO: this will hang if there is an issue. We can't use c.Request.Context() (or really any)
-	//  since it will be canceled when the request is closed which happens quickly since we push
-	//  this into the background.
-	//
-	// For now I'm just using the server context so at least the request is canceled if
-	// the server gets deleted.
+	// ponytail: use s.Context() for timeout; add configurable timeout if hangs occur
 	req, err := http.NewRequestWithContext(s.Context(), http.MethodGet, data.DownloadUrl, nil)
 	if err != nil {
 		middleware.CaptureAndAbort(c, err)

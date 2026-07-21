@@ -87,7 +87,7 @@ func TestFilesystem_Openfile(t *testing.T) {
 			_, _, err := fs.File("foo/bar.txt")
 
 			g.Assert(err).IsNotNil()
-			// TODO
+			// ponytail: uncomment when ErrorCode type is exported
 			//g.Assert(IsErrorCode(err, ErrNotExist)).IsTrue()
 		})
 

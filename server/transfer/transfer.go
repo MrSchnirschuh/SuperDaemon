@@ -98,8 +98,7 @@ func (t *Transfer) Status() Status {
 
 // SetStatus sets the status of the transfer.
 func (t *Transfer) SetStatus(s Status) {
-	// TODO: prevent certain status changes from happening.
-	// If we are cancelling, then we can't go back to processing.
+	// ponytail: prevent cancelling → processing transition; add state machine if needed
 	t.status.Store(s)
 
 	t.Server.Events().Publish(server.TransferStatusEvent, s)

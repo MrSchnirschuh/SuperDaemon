@@ -154,9 +154,7 @@ func (s *Server) RestoreBackup(b backup.BackupInterface, reader io.ReadCloser) (
 	err = b.Restore(s.Context(), reader, func(file string, info fs.FileInfo, r io.ReadCloser) error {
 		defer r.Close()
 		s.Events().Publish(DaemonMessageEvent, "(restoring): "+file)
-		// TODO: since this will be called a lot, it may be worth adding an optimized
-		// Write with Chtimes method to the UnixFS that is able to re-use the
-		// same dirfd and file name.
+		// ponytail: optimized Write+Chtimes if backup throughput becomes a bottleneck
 		if err := s.Filesystem().Write(file, r, info.Size(), info.Mode()); err != nil {
 			return err
 		}

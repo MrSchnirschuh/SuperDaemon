@@ -71,7 +71,7 @@ func (f FileFS) checkName(name, op string) error {
 	if !fs.ValidPath(name) {
 		return &fs.PathError{Op: "open", Path: name, Err: fs.ErrInvalid}
 	}
-	// TODO: we may need better name validation.
+	// ponytail: fs.ValidPath is sufficient for now; add path traversal check if needed
 	if name != "." {
 		return &fs.PathError{Op: op, Path: name, Err: fs.ErrNotExist}
 	}

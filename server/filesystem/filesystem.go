@@ -108,15 +108,11 @@ func (fs *Filesystem) Writefile(p string, r io.Reader) error {
 		return errors.Wrap(err, "server/filesystem: writefile: failed to stat file")
 	} else if err == nil {
 		if st.IsDir() {
-			// TODO: resolved
 			return errors.WithStack(&Error{code: ErrCodeIsDirectory, resolved: ""})
 		}
 		currentSize = st.Size()
 	}
 
-	// Touch the file and return the handle to it at this point. This will
-	// create or truncate the file, and create any necessary parent directories
-	// if they are missing.
 	file, err := fs.unixFS.Touch(p, ufs.O_RDWR|ufs.O_TRUNC, 0o644)
 	if err != nil {
 		return fmt.Errorf("error touching file: %w", err)
@@ -144,7 +140,6 @@ func (fs *Filesystem) Write(p string, r io.Reader, newSize int64, mode ufs.FileM
 		return errors.Wrap(err, "server/filesystem: writefile: failed to stat file")
 	} else if err == nil {
 		if st.IsDir() {
-			// TODO: resolved
 			return errors.WithStack(&Error{code: ErrCodeIsDirectory, resolved: ""})
 		}
 		currentSize = st.Size()
@@ -437,7 +432,7 @@ func (fs *Filesystem) ListDirectory(p string) ([]Stat, error) {
 		}
 		var m *mimetype.MIME
 		if e.Type().IsRegular() {
-			// TODO: I should probably find a better way to do this.
+			// ponytail: type assertion to open file for mimetype detection
 			eO := e.(interface {
 				Open() (ufs.File, error)
 			})

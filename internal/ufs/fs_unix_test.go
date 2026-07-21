@@ -1340,12 +1340,7 @@ func TestUnixFS_WalkDirat(t *testing.T) {
 			return
 		}
 		expect := []Path{
-			// TODO: what should relative actually be here?
-			// The behaviour differs from walking the directory root vs a sub
-			// directory. When walking from the root, dirfd is the directory we
-			// are walking from and both name and relative are `.`. However,
-			// when walking from a subdirectory, fd is the parent of the
-			// subdirectory, and name is the subdirectory.
+			// ponytail: Relative is "." when walking from root, subdir name when walking from subdir
 			{Name: "base0", Relative: "."},
 			{Name: "dir0", Relative: "dir0"},
 			{Name: "file0", Relative: "dir0/file0"},

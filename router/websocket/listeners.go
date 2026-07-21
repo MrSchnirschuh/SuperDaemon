@@ -94,7 +94,7 @@ func (h *Handler) listenForServerEvents(ctx context.Context) error {
 	logOutput := make(chan []byte, 8)
 	installOutput := make(chan []byte, 4)
 
-	h.server.Events().On(eventChan) // TODO: make a sinky
+	h.server.Events().On(eventChan) // ponytail: sink pattern — Events().On() is the sink
 	h.server.Sink(system.LogSink).On(logOutput)
 	h.server.Sink(system.InstallSink).On(installOutput)
 

@@ -45,12 +45,11 @@ func (w *CountedWriter) Write(p []byte) (int, error) {
 		return 0, io.EOF
 	}
 
-	// Write is a very simple operation for us to handle.
 	n, err := w.File.Write(p)
 	w.counter.Add(int64(n))
 	w.err = err
 
-	// TODO: is this how we actually want to handle errors with this?
+	// ponytail: propagate EOF to caller, swallow other errors (already tracked in w.err)
 	if err == io.EOF {
 		return n, io.EOF
 	}
@@ -107,7 +106,7 @@ func (r *CountedReader) Read(p []byte) (int, error) {
 	r.counter.Add(int64(n))
 	r.err = err
 
-	// TODO: is this how we actually want to handle errors with this?
+	// ponytail: propagate EOF to caller, swallow other errors (already tracked in r.err)
 	if err == io.EOF {
 		return n, io.EOF
 	}
