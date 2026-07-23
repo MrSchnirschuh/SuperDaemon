@@ -85,7 +85,9 @@ func TestFilesystem_Blocks_Symlinks(t *testing.T) {
 
 			err := fs.Writefile("external_dir/foo.txt", r)
 			g.Assert(err).IsNotNil()
-			g.Assert(errors.Is(err, ufs.ErrNotDirectory)).IsTrue("err is not ErrNotDirectory")
+			// openat2 with RESOLVE_BENEATH returns EXDEV (→ ErrBadPathResolution)
+			// for symlinks pointing outside the root, while openat returns ENOTDIR.
+			g.Assert(errors.Is(err, ufs.ErrBadPathResolution) || errors.Is(err, ufs.ErrNotDirectory)).IsTrue("err is not ErrBadPathResolution or ErrNotDirectory")
 		})
 	})
 
@@ -93,19 +95,21 @@ func TestFilesystem_Blocks_Symlinks(t *testing.T) {
 		g.It("cannot create a directory outside the root", func() {
 			err := fs.CreateDirectory("my_dir", "external_dir")
 			g.Assert(err).IsNotNil()
-			g.Assert(errors.Is(err, ufs.ErrNotDirectory)).IsTrue("err is not ErrNotDirectory")
+			// openat2 with RESOLVE_BENEATH returns EXDEV (→ ErrBadPathResolution)
+			// for symlinks pointing outside the root, while openat returns ENOTDIR.
+			g.Assert(errors.Is(err, ufs.ErrBadPathResolution) || errors.Is(err, ufs.ErrNotDirectory)).IsTrue("err is not ErrBadPathResolution or ErrNotDirectory")
 		})
 
 		g.It("cannot create a nested directory outside the root", func() {
 			err := fs.CreateDirectory("my/nested/dir", "external_dir/foo/bar")
 			g.Assert(err).IsNotNil()
-			g.Assert(errors.Is(err, ufs.ErrNotDirectory)).IsTrue("err is not ErrNotDirectory")
+			g.Assert(errors.Is(err, ufs.ErrBadPathResolution) || errors.Is(err, ufs.ErrNotDirectory)).IsTrue("err is not ErrBadPathResolution or ErrNotDirectory")
 		})
 
 		g.It("cannot create a nested directory outside the root", func() {
 			err := fs.CreateDirectory("my/nested/dir", "external_dir/server")
 			g.Assert(err).IsNotNil()
-			g.Assert(errors.Is(err, ufs.ErrNotDirectory)).IsTrue("err is not ErrNotDirectory")
+			g.Assert(errors.Is(err, ufs.ErrBadPathResolution) || errors.Is(err, ufs.ErrNotDirectory)).IsTrue("err is not ErrBadPathResolution or ErrNotDirectory")
 		})
 	})
 
@@ -137,7 +141,9 @@ func TestFilesystem_Blocks_Symlinks(t *testing.T) {
 			g.Assert(st.Mode()&ufs.ModeSymlink != 0).IsTrue()
 
 			err = fs.Rename("my_file.txt", "foo/my_file.txt")
-			g.Assert(errors.Is(err, ufs.ErrNotDirectory)).IsTrue()
+			// openat2 with RESOLVE_BENEATH returns EXDEV (→ ErrBadPathResolution)
+			// for symlinks pointing outside the root, while openat returns ENOTDIR.
+			g.Assert(errors.Is(err, ufs.ErrBadPathResolution) || errors.Is(err, ufs.ErrNotDirectory)).IsTrue()
 
 			st, err = os.Lstat(filepath.Join(rfs.root, "malicious_dir", "my_file.txt"))
 			g.Assert(errors.Is(err, ufs.ErrNotExist)).IsTrue()

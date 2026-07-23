@@ -656,7 +656,10 @@ func (fs *UnixFS) WalkDir(root string, fn WalkDirFunc) error {
 // was configured to enable openat2 support, unix.Openat2 will be used instead
 // of unix.Openat due to having better security properties for our use-case.
 func (fs *UnixFS) openat(dirfd int, name string, flag int, mode FileMode) (int, error) {
-	if flag&O_NOFOLLOW == 0 {
+	// When using openat2 with RESOLVE_BENEATH, the kernel already prevents
+	// symlink escapes. O_NOFOLLOW would break legitimate symlink following
+	// (e.g. reading through a symlink), so we only add it for openat.
+	if !fs.useOpenat2 && flag&O_NOFOLLOW == 0 {
 		flag |= O_NOFOLLOW
 	}
 
