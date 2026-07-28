@@ -41,7 +41,7 @@ jobs:
           GOOS: ${{ matrix.goos }}
           GOARCH: ${{ matrix.goarch }}
           CGO_ENABLED: 0
-          SRC_PATH: github.com/pterodactyl/wings
+          SRC_PATH: superdaemon
         run: |
           go build -v -trimpath -ldflags="-s -w -X ${SRC_PATH}/system.Version=dev-${GITHUB_SHA:0:7}" -o dist/superdaemon ${SRC_PATH}
           go build -v -trimpath -ldflags="-X ${SRC_PATH}/system.Version=dev-${GITHUB_SHA:0:7}" -o dist/superdaemon_debug ${SRC_PATH}

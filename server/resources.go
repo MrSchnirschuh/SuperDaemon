@@ -4,8 +4,8 @@ import (
 	"sync"
 	"sync/atomic"
 
-	"github.com/pterodactyl/wings/environment"
-	"github.com/pterodactyl/wings/system"
+	"superdaemon/environment"
+	"superdaemon/system"
 )
 
 // ResourceUsage defines the current resource usage for a given server instance. If a server is offline you

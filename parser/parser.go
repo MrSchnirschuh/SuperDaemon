@@ -16,8 +16,8 @@ import (
 	"gopkg.in/ini.v1"
 	"gopkg.in/yaml.v3"
 
-	"github.com/pterodactyl/wings/config"
-	"github.com/pterodactyl/wings/internal/ufs"
+	"superdaemon/config"
+	"superdaemon/internal/ufs"
 )
 
 // The file parsing options that are available for a server configuration file.

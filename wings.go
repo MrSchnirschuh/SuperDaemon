@@ -4,7 +4,7 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/pterodactyl/wings/cmd"
+	"superdaemon/cmd"
 )
 
 func main() {

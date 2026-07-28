@@ -8,9 +8,9 @@ import (
 	"github.com/apex/log"
 	"github.com/go-co-op/gocron"
 
-	"github.com/pterodactyl/wings/config"
-	"github.com/pterodactyl/wings/server"
-	"github.com/pterodactyl/wings/system"
+	"superdaemon/config"
+	"superdaemon/server"
+	"superdaemon/system"
 )
 
 const ErrCronRunning = errors.Sentinel("cron: job already running")

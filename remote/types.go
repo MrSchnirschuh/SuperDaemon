@@ -8,7 +8,7 @@ import (
 
 	"github.com/apex/log"
 
-	"github.com/pterodactyl/wings/parser"
+	"superdaemon/parser"
 )
 
 const (

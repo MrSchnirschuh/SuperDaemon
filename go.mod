@@ -1,4 +1,4 @@
-module github.com/pterodactyl/wings
+module superdaemon
 
 go 1.24.0
 

@@ -6,7 +6,7 @@ import (
 
 	"emperror.dev/errors"
 
-	"github.com/pterodactyl/wings/system"
+	"superdaemon/system"
 )
 
 // Event represents an Event sent over a Bus.

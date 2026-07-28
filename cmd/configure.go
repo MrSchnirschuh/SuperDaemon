@@ -16,7 +16,7 @@ import (
 	"github.com/AlecAivazis/survey/v2/terminal"
 	"github.com/spf13/cobra"
 
-	"github.com/pterodactyl/wings/config"
+	"superdaemon/config"
 )
 
 var configureArgs struct {

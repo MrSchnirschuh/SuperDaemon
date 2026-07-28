@@ -5,7 +5,7 @@ import (
 
 	"github.com/gammazero/workerpool"
 
-	"github.com/pterodactyl/wings/internal/ufs"
+	"superdaemon/internal/ufs"
 )
 
 // UpdateConfigurationFiles updates all the defined configuration files for

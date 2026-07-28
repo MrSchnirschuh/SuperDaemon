@@ -27,15 +27,15 @@ jobs:
           GOARCH=amd64 go build \
             -o dist/superdaemon_linux_amd64 \
             -v -trimpath \
-            -ldflags="-s -w -X github.com/pterodactyl/wings/system.Version=${{ github.ref_name }}" \
-            github.com/pterodactyl/wings
+            -ldflags="-s -w -X superdaemon/system.Version=${{ github.ref_name }}" \
+            superdaemon
           chmod 755 dist/superdaemon_linux_amd64
 
           GOARCH=arm64 go build \
             -o dist/superdaemon_linux_arm64 \
             -v -trimpath \
-            -ldflags="-s -w -X github.com/pterodactyl/wings/system.Version=${{ github.ref_name }}" \
-            github.com/pterodactyl/wings
+            -ldflags="-s -w -X superdaemon/system.Version=${{ github.ref_name }}" \
+            superdaemon
           chmod 755 dist/superdaemon_linux_arm64
 
       - name: Checksums
