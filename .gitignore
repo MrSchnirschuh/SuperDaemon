@@ -54,3 +54,5 @@ debug
 *.pprof
 *.pdf
 pprof.*
+# graphify persistent knowledge graph output
+/graphify-out/
