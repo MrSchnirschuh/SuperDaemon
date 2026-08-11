@@ -1,8 +1,6 @@
 package server
 
 import (
-	"sync"
-
 	"superdaemon/environment"
 )
 
@@ -22,8 +20,6 @@ type ConfigurationMeta struct {
 }
 
 type Configuration struct {
-	mu sync.RWMutex
-
 	// The unique identifier for the server that should be used when referencing
 	// it against the Panel API (and internally). This will be used when naming
 	// docker containers as well as in log output.
@@ -62,32 +58,28 @@ type Configuration struct {
 }
 
 func (s *Server) Config() *Configuration {
-	s.cfg.mu.RLock()
-	defer s.cfg.mu.RUnlock()
+	s.RLock()
+	defer s.RUnlock()
 	return &s.cfg
 }
 
 // DiskSpace returns the amount of disk space available to a server in bytes.
 func (s *Server) DiskSpace() int64 {
-	s.cfg.mu.RLock()
-	defer s.cfg.mu.RUnlock()
+	s.RLock()
+	defer s.RUnlock()
 	return s.cfg.Build.DiskSpace * 1024.0 * 1024.0
 }
 
 func (s *Server) MemoryLimit() int64 {
-	s.cfg.mu.RLock()
-	defer s.cfg.mu.RUnlock()
+	s.RLock()
+	defer s.RUnlock()
 	return s.cfg.Build.MemoryLimit
 }
 
 func (c *Configuration) GetUuid() string {
-	c.mu.RLock()
-	defer c.mu.RUnlock()
 	return c.Uuid
 }
 
 func (c *Configuration) SetSuspended(s bool) {
-	c.mu.Lock()
-	defer c.mu.Unlock()
 	c.Suspended = s
 }

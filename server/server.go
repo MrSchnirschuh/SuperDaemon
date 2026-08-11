@@ -218,21 +218,11 @@ func (s *Server) SyncWithConfiguration(cfg remote.ServerConfigurationResponse) e
 		return errors.WithStackIf(err)
 	}
 
-	s.cfg.mu.Lock()
-	defer s.cfg.mu.Unlock()
-
-	// Lock the new configuration. Since we have the deferred Unlock above we need
-	// to make sure that the NEW configuration object is already locked since that
-	// defer is running on the memory address for "s.cfg.mu" which we're explicitly
-	// changing on the next line.
-	c.mu.Lock()
-
-	//goland:noinspection GoVetCopyLock
-	s.cfg = c
-
 	s.Lock()
+	defer s.Unlock()
+
+	s.cfg = c
 	s.procConfig = cfg.ProcessConfiguration
-	s.Unlock()
 
 	return nil
 }
@@ -372,7 +362,7 @@ func (s *Server) ToAPIResponse() APIResponse {
 	return APIResponse{
 		State:         s.Environment.State(),
 		IsSuspended:   s.IsSuspended(),
-		Utilization:   s.Proc(),
+		Utilization:   *s.Proc(),
 		Configuration: *s.Config(),
 	}
 }
