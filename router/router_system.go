@@ -179,7 +179,9 @@ func postDeauthorizeUser(c *gin.Context) {
 		return
 	}
 
-	// todo: disconnect websockets more gracefully
+	// CancelAll triggers a graceful shutdown of every websocket connection for the
+	// affected server(s). The websocket goroutine reacts to the cancelled context
+	// and closes the underlying connection with a normal close message.
 	m := middleware.ExtractManager(c)
 	if len(data.Servers) > 0 {
 		for _, uuid := range data.Servers {

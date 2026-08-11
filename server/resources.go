@@ -20,9 +20,9 @@ type ResourceUsage struct {
 	// The current server status.
 	State *system.AtomicString `json:"state"`
 
-	// The current disk space being used by the server. This value is not guaranteed to be accurate
-	// at all times. It is "manually" set whenever server.Proc() is called. This is kind of just a
-	// hacky solution for now to avoid passing events all over the place.
+	// The current disk space being used by the server. This value is lazily updated
+	// whenever server.Proc() is called so that callers do not need to pass the
+	// disk usage through every event path.
 	Disk int64 `json:"disk_bytes"`
 }
 

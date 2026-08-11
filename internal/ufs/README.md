@@ -1,8 +1,8 @@
 # Filesystem
 
-Coming Soon&trade;
-
-> TODO
+This package provides a filesystem abstraction used by SuperDaemon. It wraps
+path handling, file operations, and directory traversal with the server-root
+semantics required by the daemon.
 
 ## Licensing
 

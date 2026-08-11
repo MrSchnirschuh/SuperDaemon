@@ -1,12 +1,10 @@
 package environment
 
 import (
-	"fmt"
 	"math"
 	"os"
 	"strconv"
 
-	"github.com/apex/log"
 	"github.com/docker/docker/api/types/container"
 
 	"superdaemon/config"
@@ -158,40 +156,50 @@ func blkioWeightSupported() bool {
 
 type Variables map[string]interface{}
 
-// Get is an ugly hacky function to handle environment variables that get passed
-// through as not-a-string from the Panel. Ideally we'd just say only pass
-// strings, but that is a fragile idea and if a string wasn't passed through
-// you'd cause a crash or the server to become unavailable. For now try to
-// handle the most likely values from the JSON and hope for the best.
+// Get returns an environment variable as a string. Variables come from the
+// Panel as JSON, so they may be null, booleans, numbers, or strings.
+//
+// ponytail: use strconv for all scalar numbers instead of fmt.Sprintf("%f")
+// which appended trailing zeros to floats, and handle the full integer
+// family correctly (the old code cast int32 to int64 and panicked).
 func (v Variables) Get(key string) string {
 	val, ok := v[key]
-	if !ok {
+	if !ok || val == nil {
 		return ""
 	}
 
-	// ponytail: handle nil val before type switch — returns empty string instead of logging a warning.
-	if val == nil {
-		return ""
-	}
-
-	switch val.(type) {
-	case int:
-		return strconv.Itoa(val.(int))
-	case int32:
-		return strconv.FormatInt(val.(int64), 10)
-	case int64:
-		return strconv.FormatInt(val.(int64), 10)
-	case float32:
-		return fmt.Sprintf("%f", val.(float32))
-	case float64:
-		return fmt.Sprintf("%f", val.(float64))
-	case bool:
-		return strconv.FormatBool(val.(bool))
+	switch t := val.(type) {
 	case string:
-		return val.(string)
+		return t
+	case bool:
+		return strconv.FormatBool(t)
+	case int:
+		return strconv.Itoa(t)
+	case int8:
+		return strconv.FormatInt(int64(t), 10)
+	case int16:
+		return strconv.FormatInt(int64(t), 10)
+	case int32:
+		return strconv.FormatInt(int64(t), 10)
+	case int64:
+		return strconv.FormatInt(t, 10)
+	case uint:
+		return strconv.FormatUint(uint64(t), 10)
+	case uint8:
+		return strconv.FormatUint(uint64(t), 10)
+	case uint16:
+		return strconv.FormatUint(uint64(t), 10)
+	case uint32:
+		return strconv.FormatUint(uint64(t), 10)
+	case uint64:
+		return strconv.FormatUint(t, 10)
+	case float32:
+		return strconv.FormatFloat(float64(t), 'f', -1, 32)
+	case float64:
+		return strconv.FormatFloat(t, 'f', -1, 64)
 	}
 
-	log.Warn(fmt.Sprintf("failed to marshal environment variable \"%s\" of type %+v into string", key, val))
-
+	// Non-scalar values (objects, arrays) cannot be represented as a single env
+	// value. Returning empty keeps the server start command predictable.
 	return ""
 }
