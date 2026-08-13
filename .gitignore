@@ -56,3 +56,4 @@ debug
 pprof.*
 # graphify persistent knowledge graph output
 /graphify-out/
+.envrc
