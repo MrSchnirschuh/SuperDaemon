@@ -40,7 +40,9 @@ jobs:
 
       - name: Checksums
         run: |
-          cd dist && sha256sum superdaemon_linux_amd64 superdaemon_linux_arm64 > checksums.txt
+          cd dist
+          # ponytail: only checksum artifacts the build step actually produced
+          sha256sum $(ls -1 superdaemon_linux_* 2>/dev/null) > checksums.txt
 
       - name: Create Release & Upload Assets
         uses: softprops/action-gh-release@a06a81a03ee405af7f2048a818ed3f03bbf83c7b # v2.5.0

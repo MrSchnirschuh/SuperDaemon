@@ -4,6 +4,13 @@ build:
 	GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -gcflags "all=-trimpath=$(pwd)" -o build/superdaemon_linux_amd64 -v wings.go
 	GOOS=linux GOARCH=arm64 go build -ldflags="-s -w" -gcflags "all=-trimpath=$(pwd)" -o build/superdaemon_linux_arm64 -v wings.go
 
+test:
+	go vet ./...
+	go test ./...
+
+test-release:
+	./scripts/test-release.sh
+
 debug:
 	go build -ldflags="-X superdaemon/system.Version=$(GIT_HEAD)"
 	sudo ./superdaemon --debug --ignore-certificate-errors --config config.yml --pprof --pprof-block-rate 1
@@ -19,4 +26,4 @@ cross-build: clean build compress
 clean:
 	rm -rf build/superdaemon_*
 
-.PHONY: all build compress clean
+.PHONY: all build test test-release compress clean
