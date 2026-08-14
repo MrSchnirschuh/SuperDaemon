@@ -96,9 +96,21 @@ func SetAccessControlHeaders() gin.HandlerFunc {
 	location := cfg.PanelLocation
 	allowPrivateNetwork := cfg.AllowCORSPrivateNetwork
 
+	// Wildcard CORS origins cannot safely be combined with credentials; browsers
+	// reject the combination and it leaks credential-bearing requests. If a wildcard
+	// is configured we keep the rest of CORS intact but drop credentials.
+	allowCredentials := "true"
+	for _, o := range origins {
+		if o == "*" {
+			allowCredentials = "false"
+			log.Warn("wildcard CORS origin '*' configured; disabling Access-Control-Allow-Credentials")
+			break
+		}
+	}
+
 	return func(c *gin.Context) {
 		c.Header("Access-Control-Allow-Origin", location)
-		c.Header("Access-Control-Allow-Credentials", "true")
+		c.Header("Access-Control-Allow-Credentials", allowCredentials)
 		c.Header("Access-Control-Allow-Methods", "GET, POST, PATCH, PUT, DELETE, OPTIONS")
 		c.Header("Access-Control-Allow-Headers", "Accept, Accept-Encoding, Authorization, Cache-Control, Content-Type, Content-Length, Origin, X-Real-IP, X-CSRF-Token")
 
