@@ -118,10 +118,16 @@ func SetAccessControlHeaders() gin.HandlerFunc {
 		// cannot set multiple values here we need to see if the origin is one of the ones
 		// that we allow, and if so return it explicitly. Otherwise, just return the default
 		// origin which is the same URL that the Panel is located at.
+		//
+		// ponytail: never allow a wildcard origin while credentials are enabled; that would
+		// leak cookies/auth tokens to arbitrary sites.
 		origin := c.GetHeader("Origin")
 		if origin != location {
 			for _, o := range origins {
-				if o != "*" && o != origin {
+				if o == "*" {
+					continue
+				}
+				if o != origin {
 					continue
 				}
 				c.Header("Access-Control-Allow-Origin", o)
