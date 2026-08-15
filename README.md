@@ -1,35 +1,53 @@
 # SuperDaemon
 
-SuperDaemon is a fork of [Pterodactyl Wings](https://github.com/pterodactyl/wings) — Pterodactyl's server control plane, built for the rapidly changing gaming industry and designed to be
-highly performant and secure. SuperDaemon provides an HTTP API allowing you to interface directly with running server
+SuperDaemon is a fork of [Pterodactyl Wings](https://github.com/pterodactyl/wings). It provides the same HTTP API and SFTP access to manage game-server containers, but is developed independently.
+
+SuperDaemon provides an HTTP API allowing you to interface directly with running server
 instances, fetch server logs, generate backups, and control all aspects of the server lifecycle.
 
-In addition, SuperDaemon ships with a built-in SFTP server allowing your system to remain free of Pterodactyl specific
-dependencies, and allowing users to authenticate with the same credentials they would normally use to access the Panel.
+In addition, SuperDaemon ships with a built-in SFTP server allowing your system to remain free of
+Pterodactyl-specific dependencies, and allowing users to authenticate with the same credentials they
+would normally use to access the Panel.
 
-## Sponsors
+## Migrating from Wings
 
-I would like to extend my sincere thanks to the following sponsors for helping fund Pterodactyl's development.
-[Interested in becoming a sponsor?](https://github.com/sponsors/pterodactyl)
+SuperDaemon is a drop-in replacement for Wings in most setups. The binary name is `superdaemon`
+instead of `wings`, but the configuration layout and paths intentionally stay compatible:
 
-| Company                                                                           | About                                                                                                                                                                                                                                           |
-|-----------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| [**Aussie Server Hosts**](https://aussieserverhosts.com/)                         | No frills Australian Owned and operated High Performance Server hosting for some of the most demanding games serving Australia and New Zealand.                                                                                                 |
-| [**BisectHosting**](https://www.bisecthosting.com/)                               | BisectHosting provides Minecraft, Valheim and other server hosting services with the highest reliability and lightning fast support since 2012.                                                                                                 |
-| [**MineStrator**](https://minestrator.com/)                                       | Looking for the most highend French hosting company for your minecraft server? More than 24,000 members on our discord trust us. Give us a try!                                                                                                 |
-| [**HostEZ**](https://hostez.io)                                                   | US & EU Rust & Minecraft Hosting. DDoS Protected bare metal, VPS and colocation with low latency, high uptime and maximum availability. EZ!                                                                                                     |
-| [**Blueprint**](https://blueprint.zip/?utm_source=pterodactyl&utm_medium=sponsor) | Create and install Pterodactyl addons and themes with the growing Blueprint framework - the package-manager for Pterodactyl. Use multiple modifications at once without worrying about conflicts and make use of the large extension ecosystem. |
-| [**indifferent broccoli**](https://indifferentbroccoli.com/)                      | indifferent broccoli is a game server hosting and rental company. With us, you get top-notch computer power for your gaming sessions. We destroy lag, latency, and complexity--letting you focus on the fun stuff.                              |
+| Wings                 | SuperDaemon                                         |
+|-----------------------|-----------------------------------------------------|
+| `wings`               | `superdaemon`                                       |
+| `/etc/pterodactyl/config.yml` | `/etc/pterodactyl/config.yml` (same location) |
+| `/var/lib/pterodactyl`      | `/var/lib/pterodactyl`                      |
+| `/var/log/pterodactyl`      | `/var/log/pterodactyl`                      |
+
+To migrate from an existing Wings installation:
+
+1. Download the `superdaemon_linux_amd64` or `superdaemon_linux_arm64` release asset for your platform.
+2. Stop the running `wings` service.
+3. Replace the binary path in your systemd unit (or container image) with `superdaemon`.
+4. Start the `superdaemon` service. Your existing `config.yml` and server data continue to work unchanged.
+
+## Releases
+
+Pre-built binaries are attached to each GitHub Release. The release names use the SuperDaemon binary name:
+
+- `superdaemon_linux_amd64`
+- `superdaemon_linux_arm64`
 
 ## Documentation
 
-* [Panel Documentation](https://pterodactyl.io/panel/1.0/getting_started.html)
+Upstream Wings documentation is a good starting point because SuperDaemon keeps the same
+configuration format and API surface:
+
 * [Wings Documentation](https://pterodactyl.io/wings/1.0/installing.html)
 * [Community Guides](https://pterodactyl.io/community/about.html)
-* Or, get additional help [via Discord](https://discord.gg/pterodactyl)
+
+For SuperDaemon-specific issues, please use this repository.
 
 ## Reporting Issues
 
-Please use the [pterodactyl/panel](https://github.com/pterodactyl/panel) repository to report any issues or make
-feature requests for Wings. In addition, the [security policy](https://github.com/pterodactyl/panel/security/policy) listed
-within that repository also applies to Wings.
+Please use the [MrSchnirschuh/SuperDaemon](https://github.com/MrSchnirschuh/SuperDaemon) repository
+to report issues or make feature requests for SuperDaemon.
+
+Security issues should be reported privately to the repository maintainer.
