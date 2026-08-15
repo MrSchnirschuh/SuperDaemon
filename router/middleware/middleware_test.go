@@ -32,6 +32,18 @@ func TestSetAccessControlHeaders(t *testing.T) {
 			wantCredentials: "false",
 			wantAllowOrigin: "*",
 		},
+		"non-matching origin falls back to panel location": {
+			allowedOrigins:  []string{"https://panel.example.com"},
+			origin:          "https://evil.example.com",
+			wantCredentials: "true",
+			wantAllowOrigin: "https://panel.example.com",
+		},
+		"missing origin header falls back to panel location": {
+			allowedOrigins:  []string{"https://panel.example.com"},
+			origin:          "",
+			wantCredentials: "true",
+			wantAllowOrigin: "https://panel.example.com",
+		},
 	} {
 		t.Run(name, func(t *testing.T) {
 			// Reset global config to a known good state after each subtest.
@@ -51,7 +63,9 @@ func TestSetAccessControlHeaders(t *testing.T) {
 			})
 
 			req := httptest.NewRequest(http.MethodGet, "/test", nil)
-			req.Header.Set("Origin", tt.origin)
+			if tt.origin != "" {
+				req.Header.Set("Origin", tt.origin)
+			}
 			rec := httptest.NewRecorder()
 			router.ServeHTTP(rec, req)
 
