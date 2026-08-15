@@ -29,7 +29,6 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/gorilla/websocket v1.5.3
 	github.com/iancoleman/strcase v0.3.0
-	github.com/icza/dyno v0.0.0-20230330125955-09f820a8d9c0
 	github.com/juju/ratelimit v1.0.2
 	github.com/klauspost/compress v1.18.0
 	github.com/klauspost/pgzip v1.2.6
