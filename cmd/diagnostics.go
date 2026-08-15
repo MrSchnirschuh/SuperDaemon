@@ -45,7 +45,7 @@ var diagnosticsArgs struct {
 func newDiagnosticsCommand() *cobra.Command {
 	command := &cobra.Command{
 		Use:   "diagnostics",
-		Short: "Collect and report information about this Wings instance to assist in debugging.",
+		Short: "Collect and report information about this SuperDaemon instance to assist in debugging.",
 		PreRun: func(cmd *cobra.Command, args []string) {
 			initConfig()
 			log.SetHandler(cli.Default)
@@ -59,9 +59,9 @@ func newDiagnosticsCommand() *cobra.Command {
 	return command
 }
 
-// diagnosticsCmdRun collects diagnostics about wings, its configuration and the node.
+// diagnosticsCmdRun collects diagnostics about superdaemon, its configuration and the node.
 // We collect:
-// - wings and docker versions
+// - superdaemon and docker versions
 // - relevant parts of daemon configuration
 // - the docker debug output
 // - running docker containers
@@ -95,9 +95,9 @@ func diagnosticsCmdRun(*cobra.Command, []string) {
 	dockerVersion, dockerInfo, dockerErr := getDockerInfo()
 
 	output := &strings.Builder{}
-	fmt.Fprintln(output, "Pterodactyl Wings - Diagnostics Report")
+	fmt.Fprintln(output, "SuperDaemon - Diagnostics Report")
 	printHeader(output, "Versions")
-	fmt.Fprintln(output, "               Wings:", system.Version)
+	fmt.Fprintln(output, "          SuperDaemon:", system.Version)
 	if dockerErr == nil {
 		fmt.Fprintln(output, "              Docker:", dockerVersion.Version)
 	}
@@ -108,7 +108,7 @@ func diagnosticsCmdRun(*cobra.Command, []string) {
 		fmt.Fprintln(output, "                  OS:", os)
 	}
 
-	printHeader(output, "Wings Configuration")
+	printHeader(output, "SuperDaemon Configuration")
 	if err := config.FromFile(config.DefaultLocation); err != nil {
 	}
 	cfg := config.Get()
@@ -165,7 +165,7 @@ func diagnosticsCmdRun(*cobra.Command, []string) {
 		fmt.Fprint(output, "Couldn't list containers: ", err)
 	}
 
-	printHeader(output, "Latest Wings Logs")
+	printHeader(output, "Latest SuperDaemon Logs")
 	if diagnosticsArgs.IncludeLogs {
 		p := "/var/log/pterodactyl/wings.log"
 		if cfg != nil {
