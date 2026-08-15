@@ -72,7 +72,7 @@ type SftpConfiguration struct {
 }
 
 // ApiConfiguration defines the configuration for the internal API that is
-// exposed by the Wings webserver.
+// exposed by the SuperDaemon webserver.
 type ApiConfiguration struct {
 	// The interface that the internal webserver should bind to.
 	Host string `default:"0.0.0.0" yaml:"host"`
@@ -100,9 +100,9 @@ type ApiConfiguration struct {
 }
 
 // RemoteQueryConfiguration defines the configuration settings for remote requests
-// from Wings to the Panel.
+// from SuperDaemon to the Panel.
 type RemoteQueryConfiguration struct {
-	// The amount of time in seconds that Wings should allow for a request to the Panel API
+	// The amount of time in seconds that SuperDaemon should allow for a request to the Panel API
 	// to complete. If this time passes the request will be marked as failed. If your requests
 	// are taking longer than 30 seconds to complete it is likely a performance issue that
 	// should be resolved on the Panel, and not something that should be resolved by upping this
@@ -110,7 +110,7 @@ type RemoteQueryConfiguration struct {
 	Timeout int `default:"30" yaml:"timeout"`
 
 	// The number of servers to load in a single request to the Panel API when booting the
-	// Wings instance. A single request is initially made to the Panel to get this number
+	// SuperDaemon instance. A single request is initially made to the Panel to get this number
 	// of servers, and then the pagination status is checked and additional requests are
 	// fired off in parallel to request the remaining pages.
 	//
@@ -126,7 +126,7 @@ type SystemConfiguration struct {
 	// The root directory where all of the pterodactyl data is stored at.
 	RootDirectory string `default:"/var/lib/pterodactyl" json:"-" yaml:"root_directory"`
 
-	// Directory where logs for server installations and other wings events are logged.
+	// Directory where logs for server installations and other superdaemon events are logged.
 	LogDirectory string `default:"/var/log/pterodactyl" json:"-" yaml:"log_directory"`
 
 	// Directory where the server data is stored at.
@@ -145,11 +145,11 @@ type SystemConfiguration struct {
 	// The user that should own all of the server files, and be used for containers.
 	Username string `default:"pterodactyl" yaml:"username"`
 
-	// The timezone for this Wings instance. This is detected by Wings automatically if possible,
+	// The timezone for this SuperDaemon instance. This is detected by SuperDaemon automatically if possible,
 	// and falls back to UTC if not able to be detected. If you need to set this manually, that
 	// can also be done.
 	//
-	// This timezone value is passed into all containers created by Wings.
+	// This timezone value is passed into all containers created by SuperDaemon.
 	Timezone string `yaml:"timezone"`
 
 	// Definitions for the user that gets created to ensure that we can quickly access
@@ -161,11 +161,11 @@ type SystemConfiguration struct {
 			Enabled bool `yaml:"enabled" default:"false"`
 			// ContainerUID controls the UID of the user inside the container.
 			// This should likely be set to 0 so the container runs as the user
-			// running Wings.
+			// running SuperDaemon.
 			ContainerUID int `yaml:"container_uid" default:"0"`
 			// ContainerGID controls the GID of the user inside the container.
 			// This should likely be set to 0 so the container runs as the user
-			// running Wings.
+			// running SuperDaemon.
 			ContainerGID int `yaml:"container_gid" default:"0"`
 		} `yaml:"rootless"`
 
@@ -173,40 +173,40 @@ type SystemConfiguration struct {
 		Gid int `yaml:"gid"`
 	} `yaml:"user"`
 
-	// Passwd controls the mounting of a generated passwd files into containers started by Wings.
+	// Passwd controls the mounting of a generated passwd files into containers started by SuperDaemon.
 	Passwd struct {
 		// Enable controls whether generated passwd files should be mounted into containers.
 		//
-		// By default this option is disabled and Wings will not mount any
+		// By default this option is disabled and SuperDaemon will not mount any
 		// additional passwd files into containers.
 		Enable bool `yaml:"enabled" default:"false"`
 
 		// Directory is the directory on disk where the generated passwd files will be stored.
-		// This directory may be temporary as it will be re-created whenever Wings is started.
+		// This directory may be temporary as it will be re-created whenever SuperDaemon is started.
 		//
-		// This path **WILL** be both written to by Wings and mounted into containers created by
-		// Wings. If you are running Wings itself in a container, this path will need to be mounted
-		// into the Wings container as the exact path on the host, which should match the value
+		// This path **WILL** be both written to by SuperDaemon and mounted into containers created by
+		// SuperDaemon. If you are running SuperDaemon itself in a container, this path will need to be mounted
+		// into the SuperDaemon container as the exact path on the host, which should match the value
 		// specified here. If you are using SELinux, you will need to make sure this file has the
 		// correct SELinux context in order for containers to use it.
 		Directory string `yaml:"directory" default:"/run/wings/etc"`
 	} `yaml:"passwd"`
 
-	// MachineID controls the mounting of a generated `/etc/machine-id` file into containers started by Wings.
+	// MachineID controls the mounting of a generated `/etc/machine-id` file into containers started by SuperDaemon.
 	MachineID struct {
 		// Enable controls whether a generated machine-id file should be mounted
 		// into containers.
 		//
-		// By default this option is enabled and Wings will mount an additional
+		// By default this option is enabled and SuperDaemon will mount an additional
 		// machine-id file into containers.
 		Enable bool `yaml:"enabled" default:"true"`
 
 		// Directory is the directory on disk where the generated machine-id files will be stored.
-		// This directory may be temporary as it will be re-created whenever Wings is started.
+		// This directory may be temporary as it will be re-created whenever SuperDaemon is started.
 		//
-		// This path **WILL** be both written to by Wings and mounted into containers created by
-		// Wings. If you are running Wings itself in a container, this path will need to be mounted
-		// into the Wings container as the exact path on the host, which should match the value
+		// This path **WILL** be both written to by SuperDaemon and mounted into containers created by
+		// SuperDaemon. If you are running SuperDaemon itself in a container, this path will need to be mounted
+		// into the SuperDaemon container as the exact path on the host, which should match the value
 		// specified here. If you are using SELinux, you will need to make sure this file has the
 		// correct SELinux context in order for containers to use it.
 		Directory string `yaml:"directory" default:"/run/wings/machine-id"`
@@ -214,7 +214,7 @@ type SystemConfiguration struct {
 
 	// The amount of time in seconds that can elapse before a server's disk space calculation is
 	// considered stale and a re-check should occur. DANGER: setting this value too low can seriously
-	// impact system performance and cause massive I/O bottlenecks and high CPU usage for the Wings
+	// impact system performance and cause massive I/O bottlenecks and high CPU usage for the SuperDaemon
 	// process.
 	//
 	// Set to 0 to disable disk checking entirely. This will always return 0 for the disk space used
@@ -237,7 +237,7 @@ type SystemConfiguration struct {
 	// frequently modifying a servers' files.
 	CheckPermissionsOnBoot bool `default:"true" yaml:"check_permissions_on_boot"`
 
-	// If set to false Wings will not attempt to write a log rotate configuration to the disk
+	// If set to false SuperDaemon will not attempt to write a log rotate configuration to the disk
 	// when it boots and one is not detected.
 	EnableLogRotate bool `default:"true" yaml:"enable_log_rotate"`
 
@@ -259,8 +259,8 @@ type CrashDetection struct {
 	// CrashDetectionEnabled sets if crash detection is enabled globally for all servers on this node.
 	CrashDetectionEnabled bool `default:"true" yaml:"enabled"`
 
-	// Determines if Wings should detect a server that stops with a normal exit code of
-	// "0" as being crashed if the process stopped without any Wings interaction. E.g.
+	// Determines if SuperDaemon should detect a server that stops with a normal exit code of
+	// "0" as being crashed if the process stopped without any SuperDaemon interaction. E.g.
 	// the user did not press the stop button, but the process stopped cleanly.
 	DetectCleanExitAsCrash bool `default:"true" yaml:"detect_clean_exit_as_crash"`
 
@@ -281,7 +281,7 @@ type Backups struct {
 	// Defaults to 0 (unlimited)
 	WriteLimit int `default:"0" yaml:"write_limit"`
 
-	// CompressionLevel determines how much backups created by wings should be compressed.
+	// CompressionLevel determines how much backups created by superdaemon should be compressed.
 	//
 	// "none" -> no compression will be applied
 	// "best_speed" -> uses gzip level 1 for fast speed
@@ -326,7 +326,7 @@ type Configuration struct {
 	// The location from which this configuration instance was instantiated.
 	path string
 
-	// Determines if wings should be running in debug mode. This value is ignored
+	// Determines if superdaemon should be running in debug mode. This value is ignored
 	// if the debug flag is passed through the command line arguments.
 	Debug bool
 
@@ -367,7 +367,7 @@ type Configuration struct {
 
 	// AllowCORSPrivateNetwork sets the `Access-Control-Request-Private-Network` header which
 	// allows client browsers to make requests to internal IP addresses over HTTP.  This setting
-	// is only required by users running Wings without SSL certificates and using internal IP
+	// is only required by users running SuperDaemon without SSL certificates and using internal IP
 	// addresses in order to connect. Most users should NOT enable this setting.
 	AllowCORSPrivateNetwork bool `json:"allow_cors_private_network" yaml:"allow_cors_private_network"`
 
@@ -490,7 +490,7 @@ func EnsurePterodactylUser() error {
 		return err
 	}
 
-	// Our way of detecting if wings is running inside of Docker.
+	// Our way of detecting if superdaemon is running inside of Docker.
 	if sysName == "distroless" {
 		_config.System.Username = system.FirstNotEmpty(os.Getenv("WINGS_USERNAME"), "pterodactyl")
 		_config.System.User.Uid = system.MustInt(system.FirstNotEmpty(os.Getenv("WINGS_UID"), "988"))
@@ -549,7 +549,7 @@ func EnsurePterodactylUser() error {
 	return nil
 }
 
-// ConfigurePasswd generates required passwd files for use with containers started by Wings.
+// ConfigurePasswd generates required passwd files for use with containers started by SuperDaemon.
 func ConfigurePasswd() error {
 	passwd := _config.System.Passwd
 	if !passwd.Enable {
@@ -686,7 +686,7 @@ func ConfigureDirectories() error {
 	return nil
 }
 
-// EnableLogRotation writes a logrotate file for wings to the system logrotate
+// EnableLogRotation writes a logrotate file for superdaemon to the system logrotate
 // configuration directory if one exists and a logrotate file is not found. This
 // allows us to basically automate away the log rotation for most installs, but
 // also enable users to make modifications on their own.
@@ -709,7 +709,7 @@ func EnableLogRotation() error {
 
 	log.Info("no log rotation configuration found: adding file now")
 	// If we've gotten to this point it means the logrotate directory exists on the system
-	// but there is not a file for wings already. In that case, let us write a new file to
+	// but there is not a file for superdaemon already. In that case, let us write a new file to
 	// it so files can be rotated easily.
 	f, err := os.Create("/etc/logrotate.d/wings")
 	if err != nil {
@@ -763,7 +763,7 @@ func ConfigureTimezone() error {
 			defer cancel()
 			// Okay, file isn't found on this OS, we will try using timedatectl to handle this. If this
 			// command fails, exit, but if it returns a value use that. If no value is returned we will
-			// fall through to UTC to get Wings booted at least.
+			// fall through to UTC to get SuperDaemon booted at least.
 			out, err := exec.CommandContext(ctx, "timedatectl").Output()
 			if err != nil {
 				log.WithField("error", err).Warn("failed to execute \"timedatectl\" to determine system timezone, falling back to UTC")
