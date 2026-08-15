@@ -107,7 +107,7 @@ type ConfigurationFile struct {
 	Parser   ConfigurationParser            `json:"parser"`
 	Replace  []ConfigurationFileReplacement `json:"replace"`
 
-	// Tracks Wings' configuration so that we can quickly get values
+	// Tracks SuperDaemon's configuration so that we can quickly get values
 	// out of it when variables request it.
 	configuration []byte
 }
