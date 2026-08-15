@@ -4,6 +4,7 @@ import (
 	"crypto/subtle"
 	"io"
 	"net/http"
+	"slices"
 	"strings"
 
 	"emperror.dev/errors"
@@ -134,16 +135,18 @@ func SetAccessControlHeaders() gin.HandlerFunc {
 		// ponytail: never allow a wildcard origin while credentials are enabled; that would
 		// leak cookies/auth tokens to arbitrary sites.
 		origin := c.GetHeader("Origin")
-		if origin != location {
-			for _, o := range origins {
-				if o == "*" {
-					continue
+		if slices.Contains(origins, "*") {
+			c.Header("Access-Control-Allow-Origin", "*")
+		} else {
+			c.Header("Access-Control-Allow-Origin", location)
+			if origin != location {
+				for _, o := range origins {
+					if o != origin {
+						continue
+					}
+					c.Header("Access-Control-Allow-Origin", o)
+					break
 				}
-				if o != origin {
-					continue
-				}
-				c.Header("Access-Control-Allow-Origin", o)
-				break
 			}
 		}
 		if c.Request.Method == http.MethodOptions {
