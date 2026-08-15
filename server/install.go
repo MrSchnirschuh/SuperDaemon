@@ -441,7 +441,7 @@ func (ip *InstallationProcess) Execute() (string, error) {
 
 	// Ensure the root directory for the server exists properly before attempting
 	// to trigger the reinstall of the server. It is possible the directory would
-	// not exist when this runs if Wings boots with a missing directory and a user
+	// not exist when this runs if SuperDaemon boots with a missing directory and a user
 	// triggers a reinstall before trying to start the server.
 	if err := ip.Server.EnsureDataDirectoryExists(); err != nil {
 		return "", err

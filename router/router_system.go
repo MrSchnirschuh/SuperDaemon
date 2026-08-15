@@ -17,7 +17,7 @@ import (
 	"superdaemon/system"
 )
 
-// Returns information about the system that wings is running on.
+// Returns information about the system that superdaemon is running on.
 func getSystemInformation(c *gin.Context) {
 	i, err := system.GetSystemInformation()
 	if err != nil {
@@ -47,7 +47,7 @@ func getSystemInformation(c *gin.Context) {
 	})
 }
 
-// Returns resource utilization info for the system wings is running on.
+// Returns resource utilization info for the system superdaemon is running on.
 func getSystemUtilization(c *gin.Context) {
 	u, err := system.GetSystemUtilization()
 	if err != nil {
@@ -58,7 +58,7 @@ func getSystemUtilization(c *gin.Context) {
 }
 
 // Returns all the servers that are registered and configured correctly on
-// this wings instance.
+// this superdaemon instance.
 func getAllServers(c *gin.Context) {
 	servers := middleware.ExtractManager(c).All()
 	out := make([]server.APIResponse, len(servers), len(servers))
@@ -68,7 +68,7 @@ func getAllServers(c *gin.Context) {
 	c.JSON(http.StatusOK, out)
 }
 
-// Creates a new server on the wings daemon and begins the installation process
+// Creates a new server on the superdaemon daemon and begins the installation process
 // for it.
 func postCreateServer(c *gin.Context) {
 	manager := middleware.ExtractManager(c)
@@ -130,7 +130,7 @@ type postUpdateConfigurationResponse struct {
 	Applied bool `json:"applied"`
 }
 
-// Updates the running configuration for this Wings instance.
+// Updates the running configuration for this SuperDaemon instance.
 func postUpdateConfiguration(c *gin.Context) {
 	cfg := config.Get()
 

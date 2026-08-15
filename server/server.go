@@ -24,7 +24,7 @@ import (
 )
 
 // Server is the high level definition for a server instance being controlled
-// by Wings.
+// by SuperDaemon.
 type Server struct {
 	// Internal mutex used to block actions that need to occur sequentially, such as
 	// writing the configuration to the disk.
@@ -166,12 +166,12 @@ func (s *Server) Log() *log.Entry {
 	return log.WithField("server", s.ID())
 }
 
-// Sync syncs the state of the server on the Panel with Wings. This ensures that
+// Sync syncs the state of the server on the Panel with SuperDaemon. This ensures that
 // we're always using the state of the server from the Panel and allows us to
-// not require successful API calls to Wings to do things.
+// not require successful API calls to SuperDaemon to do things.
 //
 // This also means mass actions can be performed against servers on the Panel
-// and they will automatically sync with Wings when the server is started.
+// and they will automatically sync with SuperDaemon when the server is started.
 func (s *Server) Sync() error {
 	cfg, err := s.client.GetServerConfiguration(s.Context(), s.ID())
 	if err != nil {
@@ -347,7 +347,7 @@ func (s *Server) IsRunning() bool {
 }
 
 // APIResponse is a type returned when requesting details about a single server
-// instance on Wings. This includes the information needed by the Panel in order
+// instance on SuperDaemon. This includes the information needed by the Panel in order
 // to show resource utilization and the current state on this system.
 type APIResponse struct {
 	State         string        `json:"state"`

@@ -19,7 +19,7 @@ var (
 	db *gorm.DB
 )
 
-// Initialize configures the local SQLite database for Wings and ensures that the models have
+// Initialize configures the local SQLite database for SuperDaemon and ensures that the models have
 // been fully migrated.
 func Initialize() error {
 	if !o.SwapIf(true) {

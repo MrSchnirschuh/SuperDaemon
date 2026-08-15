@@ -196,8 +196,8 @@ func RequireAuthorization() gin.HandlerFunc {
 			return
 		}
 
-		// All requests to Wings must be authorized with the authentication token present in
-		// the Wings configuration file. Remeber, all requests to Wings come from the Panel
+		// All requests to SuperDaemon must be authorized with the authentication token present in
+		// the SuperDaemon configuration file. Remeber, all requests to SuperDaemon come from the Panel
 		// backend, or using a signed JWT for temporary authentication.
 		if subtle.ConstantTimeCompare([]byte(auth[1]), []byte(config.Get().Token.Token)) != 1 {
 			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "You are not authorized to access this endpoint."})

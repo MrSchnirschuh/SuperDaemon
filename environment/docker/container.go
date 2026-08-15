@@ -304,7 +304,7 @@ func (e *Environment) SendCommand(c string) error {
 
 	// If the command being processed is the same as the process stop command then we
 	// want to mark the server as entering the stopping state otherwise the process will
-	// stop and Wings will think it has crashed and attempt to restart it.
+	// stop and SuperDaemon will think it has crashed and attempt to restart it.
 	if e.meta.Stop.Type == "command" && c == e.meta.Stop.Value {
 		e.SetState(environment.ProcessStoppingState)
 	}

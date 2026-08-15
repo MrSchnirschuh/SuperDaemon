@@ -21,7 +21,7 @@ import (
 // an egg available for server processes.
 //
 // This process will also confirm that the server environment exists and is in
-// a bootable state. This ensures that unexpected container deletion while Wings
+// a bootable state. This ensures that unexpected container deletion while SuperDaemon
 // is running does not result in the server becoming un-bootable.
 func (e *Environment) OnBeforeStart(ctx context.Context) error {
 	// Always destroy and re-create the server container to ensure that synced data from the Panel is used.
