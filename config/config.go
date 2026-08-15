@@ -694,7 +694,7 @@ func ConfigureDirectories() error {
 // This function IS NOT thread-safe.
 func EnableLogRotation() error {
 	if !_config.System.EnableLogRotate {
-		log.Info("skipping log rotate configuration, disabled in wings config file")
+		log.Info("skipping log rotate configuration, disabled in superdaemon config file")
 		return nil
 	}
 

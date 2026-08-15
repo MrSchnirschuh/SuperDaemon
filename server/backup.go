@@ -23,7 +23,7 @@ func (s *Server) notifyPanelOfBackup(uuid string, ad *backup.ArchiveDetails, suc
 			s.Log().WithFields(log.Fields{
 				"backup": uuid,
 				"error":  err,
-			}).Error("failed to notify panel of backup status due to wings error")
+			}).Error("failed to notify panel of backup status due to superdaemon error")
 			return err
 		}
 
