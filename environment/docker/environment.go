@@ -150,7 +150,7 @@ func (e *Environment) ExitState() (uint32, bool, error) {
 	c, err := e.ContainerInspect(context.Background())
 	if err != nil {
 		// I'm not entirely sure how this can happen to be honest. I tried deleting a
-		// container _while_ a server was running and wings gracefully saw the crash and
+		// container _while_ a server was running and SuperDaemon gracefully saw the crash and
 		// created a new container for it.
 		//
 		// However, someone reported an error in Discord about this scenario happening,
