@@ -45,7 +45,7 @@ var (
 
 var rootCommand = &cobra.Command{
 	Use:   "superdaemon",
-	Short: "Runs the API server allowing programmatic control of game servers for Pterodactyl Panel.",
+	Short: "Runs the API server allowing programmatic control of game servers for SuperDaemon.",
 	PreRun: func(cmd *cobra.Command, args []string) {
 		initConfig()
 		initLogging()
@@ -108,11 +108,11 @@ func rootCmdRun(cmd *cobra.Command, _ []string) {
 	}
 	log.WithField("timezone", config.Get().System.Timezone).Info("configured superdaemon with system timezone")
 	if err := config.ConfigureDirectories(); err != nil {
-		log.WithField("error", err).Fatal("failed to configure system directories for pterodactyl")
+		log.WithField("error", err).Fatal("failed to configure system directories for superdaemon")
 		return
 	}
 	if err := config.EnsurePterodactylUser(); err != nil {
-		log.WithField("error", err).Fatal("failed to create pterodactyl system user")
+		log.WithField("error", err).Fatal("failed to create superdaemon system user")
 		return
 	}
 	if err := config.ConfigurePasswd(); err != nil {
@@ -420,7 +420,7 @@ func initLogging() {
 	if err := os.MkdirAll(path.Join(dir, "/install"), 0o700); err != nil {
 		log2.Fatalf("cmd/root: failed to create install directory path: %s", err)
 	}
-	p := filepath.Join(dir, "/wings.log")
+	p := filepath.Join(dir, "/superdaemon.log")
 	w, err := logrotate.NewFile(p)
 	if err != nil {
 		log2.Fatalf("cmd/root: failed to create superdaemon log: %s", err)
@@ -437,7 +437,7 @@ func initLogging() {
 func printLogo() {
 	fmt.Printf(colorstring.Color(`
                      ____
-__ [blue][bold]Pterodactyl[reset] _____/___/_______ _______ ______
+__ [blue][bold]SuperDaemon[reset] _____/___/_______ _______ ______
 \_____\    \/\/    /   /       /  __   /   ___/
    \___\          /   /   /   /  /_/  /___   /
         \___/\___/___/___/___/___    /______/
@@ -445,7 +445,7 @@ __ [blue][bold]Pterodactyl[reset] _____/___/_______ _______ ______
 
 Copyright © 2018 - %d Dane Everitt & Contributors
 
-Website:  https://pterodactyl.io
+Website:  https://github.com/MrSchnirschuh/superdaemon
  Source:  https://github.com/MrSchnirschuh/superdaemon
 License:  https://github.com/MrSchnirschuh/superdaemon/blob/develop/LICENSE
 

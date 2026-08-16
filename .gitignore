@@ -36,8 +36,6 @@
 /coverage.out
 
 # The built executable
-wings
-wings.exe
 superdaemon
 dist/
 

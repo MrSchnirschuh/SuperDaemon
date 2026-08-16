@@ -167,9 +167,9 @@ func diagnosticsCmdRun(*cobra.Command, []string) {
 
 	printHeader(output, "Latest SuperDaemon Logs")
 	if diagnosticsArgs.IncludeLogs {
-		p := "/var/log/pterodactyl/wings.log"
+		p := "/var/log/pterodactyl/superdaemon.log"
 		if cfg != nil {
-			p = path.Join(cfg.System.LogDirectory, "wings.log")
+			p = path.Join(cfg.System.LogDirectory, "superdaemon.log")
 		}
 		if c, err := exec.Command("tail", "-n", strconv.Itoa(diagnosticsArgs.LogLines), p).Output(); err != nil {
 			fmt.Fprintln(output, "No logs found or an error occurred.")

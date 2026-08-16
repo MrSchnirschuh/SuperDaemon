@@ -2,8 +2,8 @@ GIT_HEAD = $(shell git rev-parse HEAD | head -c8)
 LDFLAGS = -s -w -X superdaemon/system.Version=$(GIT_HEAD)
 
 build:
-	GOOS=linux GOARCH=amd64 go build -ldflags="$(LDFLAGS)" -gcflags "all=-trimpath=$(pwd)" -o build/superdaemon_linux_amd64 -v wings.go
-	GOOS=linux GOARCH=arm64 go build -ldflags="$(LDFLAGS)" -gcflags "all=-trimpath=$(pwd)" -o build/superdaemon_linux_arm64 -v wings.go
+	GOOS=linux GOARCH=amd64 go build -ldflags="$(LDFLAGS)" -gcflags "all=-trimpath=$(pwd)" -o build/superdaemon_linux_amd64 -v superdaemon.go
+	GOOS=linux GOARCH=arm64 go build -ldflags="$(LDFLAGS)" -gcflags "all=-trimpath=$(pwd)" -o build/superdaemon_linux_arm64 -v superdaemon.go
 
 test:
 	go vet ./...

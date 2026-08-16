@@ -12,7 +12,7 @@ RUN CGO_ENABLED=0 go build \
     -v \
     -trimpath \
     -o superdaemon \
-    wings.go
+    superdaemon.go
 RUN echo "ID=\"distroless\"" > /etc/os-release
 
 # Stage 2 (Final)
